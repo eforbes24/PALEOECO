@@ -11,30 +11,24 @@ import math
 
 def fitness(genome):
     class env:
-        def __init__(self, init_pop, timesteps):
+        def __init__(self, timesteps):
 
             ### CONSTANTS ###
             self.timesteps = timesteps
-            self.init_pop = init_pop
             self.C = 0
             self.P = 0
             self.K = 0
             self.nutrient_inflow = 20
-            self.nutrient_outflow = 0.1
+            self.nutrient_outflow = 0.2
             self.s_intensity = 0.8
-            self.s_length = 0.0005
+            self.s_length = 0.001
 
-            ### BIOMASS RATIOS - SUM TO 1 ###
-            self.biom_ratio = np.array([0.5, 0.3, 0.2])
+            ### BIOMASS RATIOS - SUM TO 10 ###
+            self.biom_ratio = np.array([4, 3, 3])
         
             ### INITS ###
-            self.nutrients = np.zeros(N)
-            self.population = list()
             self.init_eq_steps = 50
             self.steps = 0
-
-            ### LIFE HISTORY ###
-            self.d_thresh = 50
 
         def influx(self):
             self.C = self.C + self.nutrient_inflow
@@ -78,27 +72,42 @@ def fitness(genome):
             self.biom_vec = np.zeros(env.timesteps)
         
         def feed(self,env):
+            ## Normalize consumption
+            C_con = self.e_loci[0]*env.C
+            P_con = self.e_loci[1]*env.P
+            K_con = self.e_loci[2]*env.K
+            sum_con = C_con + P_con + K_con
+            C_con = (C_con/sum_con)*self.maxcon
+            P_con = (P_con/sum_con)*self.maxcon
+            K_con = (K_con/sum_con)*self.maxcon
+            if C_con > env.C:
+                C_con = env.C
+            if P_con > env.P:
+                P_con = env.P
+            if K_con > env.K:
+                K_con = env.K
             ## calculate C change
-            C_in = (self.maxcon * self.e_loci[0]) * self.c_loci[0]
-            C_out = 1 - self.makeup[0]*self.s_loci[0]
+            C_in = C_con * self.c_loci[0]
+            C_out = (1 - self.s_loci[0])*self.col
             self.makeup[0] = self.makeup[0] + C_in - C_out
+            env.C = env.C + C_out - C_in
             ## calculate P change
-            P_in = (self.maxcon * self.e_loci[1]) * self.c_loci[1]
-            P_out = 1 - self.makeup[1]*self.s_loci[1]
+            P_in = P_con * self.c_loci[1]
+            P_out = (1 - self.s_loci[1])*self.col
             self.makeup[1] = self.makeup[1] + P_in - P_out
+            env.P = env.P + P_out - P_in
             ## calculate K change
-            K_in = (self.maxcon * self.e_loci[2]) * self.c_loci[2]
-            K_out = 1 - self.makeup[2]*self.s_loci[2]
+            K_in = K_con * self.c_loci[2]
+            K_out = (1 - self.s_loci[2])*self.col
             self.makeup[2] = self.makeup[2] + K_in - K_out
-
+            env.K = env.K + K_out - K_in
             ## calculate biomass change by multiplying ratios by makeup
-            biom_array = self.makeup*env.biom_ratio
+            biom_array = self.makeup/env.biom_ratio
             self.biomass = min(biom_array)
             self.biom_vec[env.steps] = self.biomass
 
-    
     ## Inits
-    test_env = env(100, 1000)
+    test_env = env(10000)
     test_hominid = hominid(test_env, genome)
 
     for i in range(test_env.init_eq_steps):
@@ -106,7 +115,7 @@ def fitness(genome):
         test_env.outflux()
     for i in range(test_env.timesteps):
         test_env.influx()
-        test_hominid.feed()
+        test_hominid.feed(test_env)
         test_env.outflux()
         test_env.steps = test_env.steps + 1
     

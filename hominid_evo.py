@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""
+PaleoEco Model - Evolution Run
+
+@author: eden
+"""
 
 from tkinter import W
 import numpy as np
@@ -20,8 +25,9 @@ if use_best_individual:
 ########################
 # Parameters
 ########################
-gens = 1000
-pop_size = 200
+gens = 100
+pop_size = 100
+## FIXED
 continuous_genotype_size = 9
 
 ########################

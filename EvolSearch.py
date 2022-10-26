@@ -156,7 +156,7 @@ class EvolSearch:
             )
         else:
             # re-create pool
-            __evolsearch_process_pool = Pool(self.num_processes)
+            __evolsearch_process_pool = ProcessPool(self.num_processes)
             self.fitness = np.asarray(
                 __evolsearch_process_pool.map(
                     self.evaluate_fitness, np.arange(self.pop_size)
